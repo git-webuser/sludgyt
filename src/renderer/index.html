@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';" />
+<title>sludgyt</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>sludgyt</h1>
+      <button id="settings-toggle" class="btn btn-ghost">настройки</button>
+    </header>
+
+    <section class="panel add-form">
+      <div class="field">
+        <label for="url-input">Ссылка</label>
+        <input id="url-input" type="text" placeholder="https://... или прямая ссылка на .m3u8/.mpd" autocomplete="off" />
+        <div id="manifest-warning" class="banner warn hidden">
+          Прямая ссылка на манифест
+        </div>
+      </div>
+      <div class="field">
+        <label for="filename-input">Имя файла</label>
+        <input id="filename-input" type="text" placeholder="my-video" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Папка сохранения</label>
+        <div class="dir-row">
+          <input id="dir-display" type="text" readonly placeholder="не выбрана" />
+          <button id="dir-browse" class="btn">Обзор…</button>
+        </div>
+      </div>
+      <div id="add-error" class="banner error hidden"></div>
+      <button id="add-btn" class="btn btn-primary">Добавить в очередь</button>
+    </section>
+
+    <section class="panel queue-panel">
+      <div class="queue-panel-header">
+        <h2>Очередь на загрузку</h2>
+        <div id="queue-status-badges" class="queue-status-badges"></div>
+      </div>
+      <div id="queue-list" class="queue-list"></div>
+    </section>
+  </div>
+
+  <dialog id="settings-dialog" class="settings-dialog">
+    <h2>Настройки</h2>
+    <div class="field">
+      <label for="ytdlp-path">Путь к yt-dlp</label>
+      <div class="dir-row">
+        <input id="ytdlp-path" type="text" placeholder="yt-dlp" />
+        <button id="ytdlp-browse" class="btn">Обзор…</button>
+      </div>
+      <div class="check-row">
+        <button id="ytdlp-check" class="btn">Проверить версию</button>
+        <button id="ytdlp-github" class="btn btn-ghost">GitHub ↗</button>
+      </div>
+      <div id="ytdlp-check-result" class="check-result"></div>
+    </div>
+    <div class="field">
+      <label for="ffmpeg-path">Путь к ffmpeg</label>
+      <div class="dir-row">
+        <input id="ffmpeg-path" type="text" placeholder="ffmpeg" />
+        <button id="ffmpeg-browse" class="btn">Обзор…</button>
+      </div>
+      <div class="check-row">
+        <button id="ffmpeg-check" class="btn">Проверить версию</button>
+        <button id="ffmpeg-github" class="btn btn-ghost">Сайт ↗</button>
+      </div>
+      <div id="ffmpeg-check-result" class="check-result"></div>
+    </div>
+    <div class="field">
+      <label for="default-dir">Папка по умолчанию</label>
+      <div class="dir-row">
+        <input id="default-dir" type="text" readonly />
+        <button id="default-dir-browse" class="btn">Обзор…</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="theme-select">Тема</label>
+      <select id="theme-select">
+        <option value="vscode-dark">VS Code Dark</option>
+        <option value="mono-day">Монохром (день)</option>
+        <option value="mono-night">Монохром (ночь)</option>
+        <option value="custom">Своя тема</option>
+      </select>
+      <div id="custom-theme-editor" class="custom-theme-editor hidden"></div>
+    </div>
+    <div class="dialog-actions">
+      <button id="settings-cancel" class="btn btn-ghost">Отмена</button>
+      <button id="settings-save" class="btn btn-primary">Сохранить</button>
+    </div>
+  </dialog>
+
+  <script src="themes.js"></script>
+  <script src="components/ascii-bar.js"></script>
+  <script src="views/add-form.js"></script>
+  <script src="views/queue-list.js"></script>
+  <script src="views/settings-panel.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

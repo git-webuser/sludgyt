@@ -1,0 +1,12 @@
+appId: com.lunnuno.sludgyt
+productName: sludgyt
+directories:
+  output: release
+files:
+  - src/**/*
+  - package.json
+win:
+  icon: build/icon.ico
+  target:
+    - target: portable
+      arch: [x64]

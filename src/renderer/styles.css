@@ -1,0 +1,363 @@
+:root {
+  --bg: #1e1e1e;
+  --bg-elevated: #252526;
+  --fg: #d4d4d4;
+  --fg-muted: #858585;
+  --accent: #007acc;
+  --accent-strong: #0e639c;
+  --accent-strong-hover: #1177bb;
+  --warn: #cca700;
+  --error: #f14c4c;
+  --success: #89d185;
+  --border: #3c3c3c;
+  --on-accent: #ffffff;
+  --font-mono: 'Cascadia Code', Consolas, 'SFMono-Regular', Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.app-header h1 {
+  font-size: 18px;
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+.panel {
+  background: var(--bg-elevated);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 14px;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.queue-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.queue-panel-header h2 {
+  margin: 0;
+}
+
+.queue-status-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+input[type='text'] {
+  width: 100%;
+  background: var(--bg);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+input[type='text']:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.dir-row {
+  display: flex;
+  gap: 8px;
+}
+
+.dir-row input {
+  flex: 1;
+}
+
+.btn {
+  background: color-mix(in srgb, var(--bg-elevated), var(--fg) 10%);
+  border: none;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  filter: brightness(1.2);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent-strong);
+  color: var(--on-accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-strong-hover);
+  filter: none;
+}
+
+.btn-ghost {
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+}
+
+.btn-ghost:hover {
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  filter: none;
+}
+
+.banner {
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-left: 3px solid;
+  background: var(--bg);
+  font-size: 12px;
+}
+
+.banner.warn {
+  border-left-color: var(--warn);
+  color: var(--warn);
+}
+
+.banner.error {
+  border-left-color: var(--error);
+  color: var(--error);
+}
+
+.hidden {
+  display: none;
+}
+
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.queue-empty {
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.queue-item {
+  background: var(--bg);
+  padding: 16px;
+}
+
+.queue-item.clickable {
+  cursor: pointer;
+}
+
+.queue-item.clickable:hover {
+  filter: brightness(1.15);
+}
+
+.queue-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.queue-item-name {
+  font-weight: bold;
+}
+
+.status-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.status-badge.total {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 15%, transparent);
+}
+
+.status-badge.queued {
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--fg-muted) 15%, transparent);
+}
+
+.status-badge.downloading {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.status-badge.sniffing {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 18%, transparent);
+}
+
+.status-badge.done {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+}
+
+.status-badge.failed {
+  color: var(--error);
+  background: color-mix(in srgb, var(--error) 18%, transparent);
+}
+
+.status-badge.cancelled {
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--fg-muted) 15%, transparent);
+}
+
+.progress-bar {
+  font-size: 13px;
+  color: var(--accent);
+  white-space: pre;
+}
+
+.item-error {
+  color: var(--error);
+  font-size: 12px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+}
+
+.item-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.manifest-flag {
+  color: var(--warn);
+  font-size: 11px;
+}
+
+.settings-dialog {
+  background: var(--bg-elevated);
+  color: var(--fg);
+  border: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-mono);
+  width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 32px;
+}
+
+.settings-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+select {
+  width: 100%;
+  background: var(--bg);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.check-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.check-result {
+  font-size: 12px;
+  margin-top: 6px;
+  color: var(--fg-muted);
+  white-space: pre-wrap;
+}
+
+.check-result.success {
+  color: var(--success);
+}
+
+.check-result.warn {
+  color: var(--warn);
+}
+
+.check-result.error {
+  color: var(--error);
+}
+
+.custom-theme-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--bg);
+}
+
+.color-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.color-row input[type='color'] {
+  width: 40px;
+  height: 24px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
