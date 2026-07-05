@@ -26,7 +26,10 @@ function isAllowedExternalUrl(value) {
   if (parsed.protocol !== 'https:') return false;
 
   if (parsed.hostname === 'github.com') {
-    return parsed.pathname === '/yt-dlp/yt-dlp' || parsed.pathname.startsWith('/yt-dlp/yt-dlp/');
+    return parsed.pathname === '/yt-dlp/yt-dlp'
+      || parsed.pathname.startsWith('/yt-dlp/yt-dlp/')
+      || parsed.pathname === '/git-webuser/sludgyt'
+      || parsed.pathname.startsWith('/git-webuser/sludgyt/');
   }
 
   return parsed.hostname === 'ffmpeg.org';

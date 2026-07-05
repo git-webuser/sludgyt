@@ -9,6 +9,10 @@ function initSettingsPanel() {
   const cookiesBrowser = document.getElementById('cookies-browser');
   const cookiesBrowserResult = document.getElementById('cookies-browser-result');
   const defaultDir = document.getElementById('default-dir');
+  const appUpdateCheckBtn = document.getElementById('app-update-check');
+  const appUpdateDownloadBtn = document.getElementById('app-update-download');
+  const appUpdateGithubBtn = document.getElementById('app-update-github');
+  const appUpdateResult = document.getElementById('app-update-result');
 
   const ytdlpBrowse = document.getElementById('ytdlp-browse');
   const ffmpegBrowse = document.getElementById('ffmpeg-browse');
@@ -29,6 +33,7 @@ function initSettingsPanel() {
   const customEditor = document.getElementById('custom-theme-editor');
 
   let workingCustomColors = null;
+  let appUpdateDownloadUrl = null;
 
   function buildCustomEditor(initialColors) {
     customEditor.innerHTML = '';
@@ -116,6 +121,10 @@ function initSettingsPanel() {
     ytdlpCheckResult.className = 'check-result';
     ffmpegCheckResult.textContent = '';
     ffmpegCheckResult.className = 'check-result';
+    appUpdateResult.textContent = '';
+    appUpdateResult.className = 'check-result';
+    appUpdateDownloadUrl = null;
+    appUpdateDownloadBtn.classList.add('hidden');
 
     themeSelect.value = settings.themeId || 'vscode-dark';
     if (settings.themeId === 'custom' && settings.customTheme) {
@@ -210,12 +219,48 @@ function initSettingsPanel() {
     ffmpegCheckResult.className = 'check-result success';
   });
 
+  appUpdateCheckBtn.addEventListener('click', async () => {
+    appUpdateResult.textContent = 'Проверка…';
+    appUpdateResult.className = 'check-result';
+    const result = await window.api.app.checkUpdate();
+    if (!result.ok) {
+      appUpdateResult.textContent = `Текущая версия ${result.current}. ${result.error}`;
+      appUpdateResult.className = 'check-result error';
+      return;
+    }
+
+    if (result.updateAvailable) {
+      appUpdateDownloadUrl = result.downloadUrl || result.releaseUrl;
+      appUpdateDownloadBtn.classList.remove('hidden');
+      const downloadHint = result.downloadName
+        ? ` Файл: ${result.downloadName}.`
+        : ' Подходящий файл не найден автоматически, открою страницу релиза.';
+      appUpdateResult.textContent = `Текущая версия ${result.current}. Доступно обновление ${result.latest}.${downloadHint}`;
+      appUpdateResult.className = 'check-result warn';
+    } else {
+      appUpdateDownloadUrl = null;
+      appUpdateDownloadBtn.classList.add('hidden');
+      appUpdateResult.textContent = `Текущая версия ${result.current}. Установлена актуальная версия.`;
+      appUpdateResult.className = 'check-result success';
+    }
+  });
+
   ytdlpGithubBtn.addEventListener('click', () => {
     window.api.shell.openExternal('https://github.com/yt-dlp/yt-dlp/releases/latest');
   });
 
   ffmpegGithubBtn.addEventListener('click', () => {
     window.api.shell.openExternal('https://ffmpeg.org/download.html');
+  });
+
+  appUpdateDownloadBtn.addEventListener('click', () => {
+    if (appUpdateDownloadUrl) {
+      window.api.shell.openExternal(appUpdateDownloadUrl);
+    }
+  });
+
+  appUpdateGithubBtn.addEventListener('click', () => {
+    window.api.shell.openExternal('https://github.com/git-webuser/sludgyt/releases/latest');
   });
 
   saveBtn.addEventListener('click', async () => {

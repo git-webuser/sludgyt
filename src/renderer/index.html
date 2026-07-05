@@ -93,6 +93,15 @@
   <dialog id="settings-dialog" class="settings-dialog">
     <h2>Настройки</h2>
     <div class="field">
+      <label>Обновления sludgyt</label>
+      <div class="check-row">
+        <button id="app-update-check" class="btn">Проверить обновления</button>
+        <button id="app-update-download" class="btn btn-primary hidden">Скачать обновление</button>
+        <button id="app-update-github" class="btn btn-ghost">Релизы ↗</button>
+      </div>
+      <div id="app-update-result" class="check-result"></div>
+    </div>
+    <div class="field">
       <label for="ytdlp-path">Путь к yt-dlp</label>
       <div class="dir-row">
         <input id="ytdlp-path" type="text" placeholder="yt-dlp" />

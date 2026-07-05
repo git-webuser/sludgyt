@@ -5,9 +5,10 @@ directories:
 files:
   - src/**/*
   - build/icon.png
+  - build/icon-mac.png
   - package.json
 mac:
-  icon: build/icon.png
+  icon: build/icon-mac.png
   identity: null
   category: public.app-category.utilities
   target:

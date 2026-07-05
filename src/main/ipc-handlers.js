@@ -1,8 +1,8 @@
 const fs = require('fs');
-const { ipcMain, dialog, shell, clipboard, BrowserWindow } = require('electron');
+const { ipcMain, dialog, shell, clipboard, BrowserWindow, app } = require('electron');
 const settingsStore = require('./settings-store');
 const queueManager = require('./queue-manager');
-const { checkYtDlp, checkFfmpeg, autoDetectBinary } = require('./version-check');
+const { checkYtDlp, checkFfmpeg, checkAppUpdate, autoDetectBinary } = require('./version-check');
 const { listCookieBrowsers } = require('./browser-detector');
 const { assertTrustedSender, isAllowedExternalUrl } = require('./security-utils');
 
@@ -46,6 +46,7 @@ function registerIpcHandlers() {
 
   ipcMain.handle('binaries:check-ytdlp', trustedHandler((event, path, opts) => checkYtDlp(path, opts)));
   ipcMain.handle('binaries:check-ffmpeg', trustedHandler((event, path) => checkFfmpeg(path)));
+  ipcMain.handle('app:check-update', trustedHandler(() => checkAppUpdate(app.getVersion())));
 
   // `which` is a fixed enum, never the raw renderer string — it maps to a hardcoded
   // literal command name below before it ever reaches the PowerShell invocation in

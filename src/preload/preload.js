@@ -7,6 +7,9 @@ function subscribe(channel, cb) {
 }
 
 contextBridge.exposeInMainWorld('api', {
+  app: {
+    checkUpdate: () => ipcRenderer.invoke('app:check-update'),
+  },
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     set: (partial) => ipcRenderer.invoke('settings:set', partial),
