@@ -14,6 +14,12 @@ const INACTIVITY_LIMIT_MS = 3 * 60 * 1000;
 const INACTIVITY_CHECK_INTERVAL_MS = 15000;
 const CANCEL_GRACE_MS = 5000;
 
+const FORMAT_SELECTORS = {
+  1080: 'bestvideo[height<=1080]+bestaudio/best[height<=1080]',
+  720: 'bestvideo[height<=720]+bestaudio/best[height<=720]',
+  480: 'bestvideo[height<=480]+bestaudio/best[height<=480]',
+};
+
 /** @type {import('../shared/types').QueueItem[]} */
 const items = [];
 let runningId = null;
@@ -52,7 +58,7 @@ function generateFilename(url) {
   return `${host}-${stamp}`;
 }
 
-function addItem({ url, filename, saveDir }) {
+function addItem({ url, filename, saveDir, quality }) {
   if (!url || !saveDir) {
     return { ok: false, error: 'Ссылка и папка обязательны.' };
   }
@@ -72,6 +78,7 @@ function addItem({ url, filename, saveDir }) {
     url,
     filename: resolvedFilename,
     saveDir,
+    quality: quality || 'best',
     status: 'queued',
     percent: 0,
     error: undefined,
@@ -126,6 +133,9 @@ function spawnYtDlp(item, url, opts = {}) {
     if (!isBareCommand(settings.ffmpegPath)) {
       args.push('--ffmpeg-location', settings.ffmpegPath);
     }
+
+    const formatSelector = FORMAT_SELECTORS[item.quality];
+    if (formatSelector) args.push('-f', formatSelector);
 
     if (opts.referer) args.push('--referer', opts.referer);
     if (opts.userAgent) args.push('--user-agent', opts.userAgent);

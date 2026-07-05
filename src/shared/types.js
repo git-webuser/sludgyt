@@ -15,6 +15,7 @@
  * @property {string} url
  * @property {string} filename
  * @property {string} saveDir
+ * @property {string} quality
  * @property {QueueItemStatus} status
  * @property {number} percent
  * @property {string} [error]

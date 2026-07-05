@@ -16,6 +16,7 @@ function initAddForm() {
   const filenameInput = document.getElementById('filename-input');
   const dirDisplay = document.getElementById('dir-display');
   const dirBrowseBtn = document.getElementById('dir-browse');
+  const qualitySelect = document.getElementById('quality-select');
   const addBtn = document.getElementById('add-btn');
   const warningBanner = document.getElementById('manifest-warning');
   const errorBanner = document.getElementById('add-error');
@@ -81,7 +82,7 @@ function initAddForm() {
       return;
     }
 
-    const result = await window.api.queue.add({ url, filename, saveDir: selectedDir });
+    const result = await window.api.queue.add({ url, filename, saveDir: selectedDir, quality: qualitySelect.value });
     if (!result.ok) {
       errorBanner.textContent = result.error;
       errorBanner.classList.remove('hidden');

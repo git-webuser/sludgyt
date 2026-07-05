@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
 <title>sludgyt</title>
 <link rel="stylesheet" href="styles.css" />
 </head>
@@ -54,6 +54,17 @@
               <path d="M4.5 4.5L19.5 19.5M19.5 4.5L4.5 19.5" stroke="currentColor" stroke-width="1.75"/>
             </svg>
           </button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="quality-select">Качество</label>
+        <div class="select-wrapper">
+          <select id="quality-select">
+            <option value="best">Максимальное (по умолчанию)</option>
+            <option value="1080">1080p и ниже</option>
+            <option value="720">720p и ниже</option>
+            <option value="480">480p и ниже</option>
+          </select>
         </div>
       </div>
       <div class="field">
@@ -116,12 +127,14 @@
     </div>
     <div class="field">
       <label for="theme-select">Тема</label>
-      <select id="theme-select">
-        <option value="vscode-dark">VS Code Dark</option>
-        <option value="mono-day">Монохром (день)</option>
-        <option value="mono-night">Монохром (ночь)</option>
-        <option value="custom">Своя тема</option>
-      </select>
+      <div class="select-wrapper">
+        <select id="theme-select">
+          <option value="vscode-dark">VS Code Dark</option>
+          <option value="mono-day">Монохром (день)</option>
+          <option value="mono-night">Монохром (ночь)</option>
+          <option value="custom">Своя тема</option>
+        </select>
+      </div>
       <div id="custom-theme-editor" class="custom-theme-editor hidden"></div>
     </div>
     <div class="dialog-actions">
