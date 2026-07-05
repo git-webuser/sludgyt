@@ -1,4 +1,4 @@
-function initSettingsPanel() {
+function initSettingsPanel(onSaved) {
   const dialog = document.getElementById('settings-dialog');
   const toggleBtn = document.getElementById('settings-toggle');
   const cancelBtn = document.getElementById('settings-cancel');
@@ -140,10 +140,18 @@ function initSettingsPanel() {
 
   toggleBtn.addEventListener('click', openDialog);
 
-  cancelBtn.addEventListener('click', async () => {
+  async function cancelSettings() {
     const settings = await window.api.settings.get();
     applyTheme(resolveActiveThemeColors(settings));
     dialog.close();
+  }
+
+  cancelBtn.addEventListener('click', cancelSettings);
+
+  // <dialog> only fires 'click' on itself (not a descendant) when the click lands
+  // on the backdrop — its own box is sized to the visible panel, not the overlay.
+  dialog.addEventListener('click', (event) => {
+    if (event.target === dialog) cancelSettings();
   });
 
   ytdlpBrowse.addEventListener('click', async () => {
@@ -276,6 +284,7 @@ function initSettingsPanel() {
     }
     await window.api.settings.set(partial);
     dialog.close();
+    onSaved?.();
   });
 
   return { open: openDialog };

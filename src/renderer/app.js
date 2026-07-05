@@ -16,16 +16,16 @@ function showStartupBanner(problems, onFix) {
   banner.classList.remove('hidden');
 }
 
+function hideStartupBanner() {
+  document.getElementById('startup-banner').classList.add('hidden');
+}
+
 (function () {
   const addForm = initAddForm();
-  const settingsPanel = initSettingsPanel();
-  setQueueRetryHandler((prefillData) => addForm.prefill(prefillData));
-  setQueueReorderHandler((newItems) => {
-    currentItems = newItems;
-    renderQueueList(currentItems);
-  });
+  let settingsPanel;
 
-  window.api.settings.get().then(async (settings) => {
+  async function checkBinaries() {
+    const settings = await window.api.settings.get();
     applyTheme(resolveActiveThemeColors(settings));
 
     const [ytdlpResult, ffmpegResult] = await Promise.all([
@@ -39,8 +39,19 @@ function showStartupBanner(problems, onFix) {
 
     if (problems.length > 0) {
       showStartupBanner(problems, () => settingsPanel.open());
+    } else {
+      hideStartupBanner();
     }
+  }
+
+  settingsPanel = initSettingsPanel(checkBinaries);
+  setQueueRetryHandler((prefillData) => addForm.prefill(prefillData));
+  setQueueReorderHandler((newItems) => {
+    currentItems = newItems;
+    renderQueueList(currentItems);
   });
+
+  checkBinaries();
 
   let currentItems = [];
 
@@ -78,9 +89,12 @@ function showStartupBanner(problems, onFix) {
     renderQueueList(currentItems);
   });
 
-  window.api.queue.onProgress(({ id, percent }) => {
+  window.api.queue.onProgress(({ id, percent, raw }) => {
     const item = currentItems.find((i) => i.id === id);
-    if (item) item.percent = percent;
-    updateItemProgress(id, percent);
+    if (item) {
+      item.percent = percent;
+      item.progressDetail = raw;
+    }
+    updateItemProgress(id, percent, raw);
   });
 })();

@@ -7,6 +7,30 @@
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="titlebar">
+    <div class="titlebar-drag">
+      <img src="app-icon.png" alt="" class="titlebar-icon" />
+      <span class="titlebar-title">sludgyt</span>
+    </div>
+    <div class="titlebar-controls">
+      <button id="titlebar-minimize" class="titlebar-btn" title="Свернуть" aria-label="Свернуть">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 5H10" stroke="currentColor" stroke-width="1"/>
+        </svg>
+      </button>
+      <button id="titlebar-maximize" class="titlebar-btn" title="Развернуть" aria-label="Развернуть">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0.5" y="0.5" width="9" height="9" stroke="currentColor"/>
+        </svg>
+      </button>
+      <button id="titlebar-close" class="titlebar-btn titlebar-btn-close" title="Закрыть" aria-label="Закрыть">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0.5 0.5L9.5 9.5M9.5 0.5L0.5 9.5" stroke="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <div class="app">
     <header class="app-header">
       <div class="app-brand">
@@ -160,6 +184,7 @@
   </dialog>
 
   <script src="themes.js"></script>
+  <script src="views/titlebar.js"></script>
   <script src="components/ascii-bar.js"></script>
   <script src="views/add-form.js"></script>
   <script src="views/queue-list.js"></script>

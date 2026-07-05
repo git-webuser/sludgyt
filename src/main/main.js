@@ -2,6 +2,9 @@ const { app, BrowserWindow, shell, Menu } = require('electron');
 const path = require('path');
 const { registerIpcHandlers } = require('./ipc-handlers');
 const { isAllowedExternalUrl } = require('./security-utils');
+const { ensureCommonBinDirsOnPath } = require('./process-utils');
+
+ensureCommonBinDirsOnPath();
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -10,6 +13,7 @@ function createWindow() {
     backgroundColor: '#1d2021',
     icon: path.join(__dirname, '../../build/icon.png'),
     autoHideMenuBar: true,
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
@@ -20,6 +24,9 @@ function createWindow() {
   });
 
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
+
+  win.on('maximize', () => win.webContents.send('window:maximize-changed', true));
+  win.on('unmaximize', () => win.webContents.send('window:maximize-changed', false));
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isAllowedExternalUrl(url)) {

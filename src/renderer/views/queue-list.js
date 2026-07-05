@@ -98,11 +98,23 @@ function renderQueueList(items) {
   }
 }
 
-function updateItemProgress(id, percent) {
+// yt-dlp can't know the total size of a live/HLS stream, so it reports a fixed
+// 0.0% for the whole download and only prints 100% once it's done — the percent
+// bar alone would look frozen. Stripping the (unreliable) percent back off the
+// raw yt-dlp line leaves the size/speed/fragment counters, which do visibly
+// change, so the user can tell it's still alive.
+function formatProgressDetail(raw) {
+  if (!raw) return '';
+  return raw.replace(/^\[download\]\s*/, '').replace(/^[\d.]+%\s*/, '').trim();
+}
+
+function updateItemProgress(id, percent, raw) {
   const row = document.querySelector(`.queue-item[data-id="${id}"]`);
   if (!row) return;
   const bar = row.querySelector('.progress-bar');
   if (bar) bar.textContent = renderAsciiBar(percent);
+  const detail = row.querySelector('.progress-detail');
+  if (detail) detail.textContent = formatProgressDetail(raw);
 }
 
 function buildQueueRow(item) {
@@ -168,6 +180,13 @@ function buildQueueRow(item) {
     bar.className = 'progress-bar';
     bar.textContent = renderAsciiBar(item.percent);
     row.appendChild(bar);
+  }
+
+  if (item.status === 'downloading') {
+    const detail = document.createElement('div');
+    detail.className = 'progress-detail';
+    detail.textContent = formatProgressDetail(item.progressDetail);
+    row.appendChild(detail);
   }
 
   if (item.status === 'failed' && item.error) {

@@ -1,6 +1,6 @@
 {
   "name": "sludgyt",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Terminal-styled desktop GUI wrapper for yt-dlp and ffmpeg",
   "main": "src/main/main.js",
   "scripts": {

@@ -15,6 +15,12 @@ const BUNDLE_ID_TO_BROWSER = {
   'ru.yandex.desktop.yandex-browser': 'yandex',
 };
 
+// Windows stores browser profiles under these roots; both env vars are unset on
+// non-Windows platforms, so `local`/`roaming` fall back to '' and the resulting
+// paths simply never match `fs.existsSync` there (no platform check needed).
+const local = process.env.LOCALAPPDATA || '';
+const roaming = process.env.APPDATA || '';
+
 const COOKIE_BROWSERS = [
   {
     id: 'safari',
@@ -33,6 +39,7 @@ const COOKIE_BROWSERS = [
       '/Applications/Google Chrome.app',
       path.join(os.homedir(), 'Applications/Google Chrome.app'),
       path.join(os.homedir(), 'Library/Application Support/Google/Chrome'),
+      path.join(local, 'Google/Chrome/User Data'),
     ],
   },
   {
@@ -42,6 +49,7 @@ const COOKIE_BROWSERS = [
       '/Applications/Firefox.app',
       path.join(os.homedir(), 'Applications/Firefox.app'),
       path.join(os.homedir(), 'Library/Application Support/Firefox/Profiles'),
+      path.join(roaming, 'Mozilla/Firefox/Profiles'),
     ],
   },
   {
@@ -51,6 +59,7 @@ const COOKIE_BROWSERS = [
       '/Applications/Microsoft Edge.app',
       path.join(os.homedir(), 'Applications/Microsoft Edge.app'),
       path.join(os.homedir(), 'Library/Application Support/Microsoft Edge'),
+      path.join(local, 'Microsoft/Edge/User Data'),
     ],
   },
   {
@@ -60,6 +69,7 @@ const COOKIE_BROWSERS = [
       '/Applications/Brave Browser.app',
       path.join(os.homedir(), 'Applications/Brave Browser.app'),
       path.join(os.homedir(), 'Library/Application Support/BraveSoftware/Brave-Browser'),
+      path.join(local, 'BraveSoftware/Brave-Browser/User Data'),
     ],
   },
   {
@@ -69,6 +79,7 @@ const COOKIE_BROWSERS = [
       '/Applications/Chromium.app',
       path.join(os.homedir(), 'Applications/Chromium.app'),
       path.join(os.homedir(), 'Library/Application Support/Chromium'),
+      path.join(local, 'Chromium/User Data'),
     ],
   },
   {
@@ -78,6 +89,7 @@ const COOKIE_BROWSERS = [
       '/Applications/Vivaldi.app',
       path.join(os.homedir(), 'Applications/Vivaldi.app'),
       path.join(os.homedir(), 'Library/Application Support/Vivaldi'),
+      path.join(local, 'Vivaldi/User Data'),
     ],
   },
   {
@@ -88,6 +100,7 @@ const COOKIE_BROWSERS = [
       '/Applications/Opera.app',
       path.join(os.homedir(), 'Applications/Opera.app'),
       path.join(os.homedir(), 'Library/Application Support/com.operasoftware.Opera'),
+      path.join(roaming, 'Opera Software/Opera Stable'),
     ],
   },
   {
@@ -98,6 +111,7 @@ const COOKIE_BROWSERS = [
       '/Applications/Yandex.app',
       path.join(os.homedir(), 'Applications/Yandex.app'),
       path.join(os.homedir(), 'Library/Application Support/Yandex/YandexBrowser'),
+      path.join(local, 'Yandex/YandexBrowser/User Data'),
     ],
   },
 ];

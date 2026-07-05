@@ -44,4 +44,12 @@ contextBridge.exposeInMainWorld('api', {
   clipboard: {
     readText: () => ipcRenderer.invoke('clipboard:read-text'),
   },
+  windowControls: {
+    platform: process.platform,
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    toggleMaximize: () => ipcRenderer.invoke('window:toggle-maximize'),
+    close: () => ipcRenderer.invoke('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+    onMaximizeChange: (cb) => subscribe('window:maximize-changed', cb),
+  },
 });

@@ -81,6 +81,25 @@ function registerIpcHandlers() {
   }));
 
   ipcMain.handle('clipboard:read-text', trustedHandler(() => clipboard.readText()));
+
+  ipcMain.handle('window:minimize', trustedHandler((event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize();
+  }));
+
+  ipcMain.handle('window:toggle-maximize', trustedHandler((event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return;
+    if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+  }));
+
+  ipcMain.handle('window:close', trustedHandler((event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close();
+  }));
+
+  ipcMain.handle('window:is-maximized', trustedHandler((event) => (
+    BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false
+  )));
 }
 
 module.exports = { registerIpcHandlers };
