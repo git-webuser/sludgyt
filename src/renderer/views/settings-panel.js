@@ -6,6 +6,8 @@ function initSettingsPanel() {
 
   const ytdlpPath = document.getElementById('ytdlp-path');
   const ffmpegPath = document.getElementById('ffmpeg-path');
+  const cookiesBrowser = document.getElementById('cookies-browser');
+  const cookiesBrowserResult = document.getElementById('cookies-browser-result');
   const defaultDir = document.getElementById('default-dir');
 
   const ytdlpBrowse = document.getElementById('ytdlp-browse');
@@ -65,10 +67,50 @@ function initSettingsPanel() {
     }
   });
 
+  function renderCookieBrowserOptions(browsers, selected) {
+    cookiesBrowser.innerHTML = '';
+
+    const disabledOption = document.createElement('option');
+    disabledOption.value = '';
+    disabledOption.textContent = 'Не использовать cookies';
+    cookiesBrowser.appendChild(disabledOption);
+
+    for (const browser of browsers) {
+      const option = document.createElement('option');
+      option.value = browser.id;
+      option.disabled = !browser.supported;
+      const suffixes = [];
+      if (browser.isDefault) suffixes.push('по умолчанию');
+      if (!browser.supported) suffixes.push('не поддерживается yt-dlp');
+      option.textContent = browser.label + (suffixes.length ? ` (${suffixes.join(', ')})` : '');
+      cookiesBrowser.appendChild(option);
+    }
+
+    if (selected && !browsers.some((browser) => browser.id === selected)) {
+      const currentOption = document.createElement('option');
+      currentOption.value = selected;
+      currentOption.textContent = selected + ' (сохранено вручную)';
+      cookiesBrowser.appendChild(currentOption);
+    }
+
+    cookiesBrowser.value = selected || '';
+    if (browsers.length === 0) {
+      cookiesBrowserResult.textContent = 'Браузеры с cookies не найдены автоматически.';
+      cookiesBrowserResult.className = 'check-result warn';
+    } else {
+      cookiesBrowserResult.textContent = 'Найдено: ' + browsers.map((browser) => browser.label).join(', ');
+      cookiesBrowserResult.className = 'check-result success';
+    }
+  }
+
   async function openDialog() {
-    const settings = await window.api.settings.get();
+    const [settings, browsers] = await Promise.all([
+      window.api.settings.get(),
+      window.api.browsers.listCookieSources(),
+    ]);
     ytdlpPath.value = settings.ytDlpPath || '';
     ffmpegPath.value = settings.ffmpegPath || '';
+    renderCookieBrowserOptions(browsers, settings.cookiesFromBrowser || '');
     defaultDir.value = settings.defaultSaveDir || '';
     ytdlpCheckResult.textContent = '';
     ytdlpCheckResult.className = 'check-result';
@@ -180,6 +222,7 @@ function initSettingsPanel() {
     const partial = {
       ytDlpPath: ytdlpPath.value.trim(),
       ffmpegPath: ffmpegPath.value.trim(),
+      cookiesFromBrowser: cookiesBrowser.value.trim(),
       defaultSaveDir: defaultDir.value.trim(),
       themeId: themeSelect.value,
     };

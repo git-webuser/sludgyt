@@ -3,12 +3,14 @@ const { ipcMain, dialog, shell, clipboard, BrowserWindow } = require('electron')
 const settingsStore = require('./settings-store');
 const queueManager = require('./queue-manager');
 const { checkYtDlp, checkFfmpeg, autoDetectBinary } = require('./version-check');
+const { listCookieBrowsers } = require('./browser-detector');
 
 const ALLOWED_EXTERNAL_PREFIXES = ['https://github.com/yt-dlp/yt-dlp', 'https://ffmpeg.org'];
 
 function registerIpcHandlers() {
   ipcMain.handle('settings:get', () => settingsStore.readSettings());
   ipcMain.handle('settings:set', (event, partial) => settingsStore.writeSettings(partial));
+  ipcMain.handle('browsers:list-cookie-sources', () => listCookieBrowsers());
 
   ipcMain.handle('dialog:pick-directory', async (event, { defaultPath } = {}) => {
     const win = BrowserWindow.fromWebContents(event.sender);

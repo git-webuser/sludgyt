@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
+const { defaultCookieBrowser } = require('./browser-detector');
 
 function settingsPath() {
   return path.join(app.getPath('userData'), 'settings.json');
@@ -10,6 +11,7 @@ function defaults() {
   return {
     ytDlpPath: 'yt-dlp',
     ffmpegPath: 'ffmpeg',
+    cookiesFromBrowser: defaultCookieBrowser(),
     defaultSaveDir: app.getPath('downloads'),
     themeId: 'vscode-dark',
     customTheme: null,

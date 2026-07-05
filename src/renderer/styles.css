@@ -310,7 +310,10 @@ input[type='text']:focus {
   color: var(--error);
   font-size: 12px;
   margin-top: 8px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .item-actions {

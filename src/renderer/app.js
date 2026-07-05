@@ -57,7 +57,7 @@ function showStartupBanner(problems, onFix) {
   function upsertItem(updated) {
     const idx = currentItems.findIndex((i) => i.id === updated.id);
     if (idx === -1) {
-      currentItems.push(updated);
+      currentItems.unshift(updated);
     } else {
       currentItems[idx] = updated;
     }

@@ -2,6 +2,7 @@
  * @typedef {Object} Settings
  * @property {string} ytDlpPath
  * @property {string} ffmpegPath
+ * @property {string} cookiesFromBrowser
  * @property {string} defaultSaveDir
  */
 

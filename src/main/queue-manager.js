@@ -86,7 +86,7 @@ function addItem({ url, filename, saveDir, quality }) {
     looksLikeRawManifest: looksLikeRawManifest(url),
     createdAt: Date.now(),
   };
-  items.push(item);
+  items.unshift(item);
   broadcastUpdate(item);
   maybeStartNext();
   return { ok: true, id: item.id };
@@ -140,6 +140,9 @@ function spawnYtDlp(item, url, opts = {}) {
     if (opts.referer) args.push('--referer', opts.referer);
     if (opts.userAgent) args.push('--user-agent', opts.userAgent);
     if (opts.cookie) args.push('--add-header', `Cookie:${opts.cookie}`);
+    if (settings.cookiesFromBrowser) {
+      args.push('--cookies-from-browser', settings.cookiesFromBrowser);
+    }
 
     args.push(url);
 
@@ -254,7 +257,8 @@ function sniffManifestForItem(item) {
   const { promise, abort } = sniffManifest(item.url);
   runningSniffAbort = abort;
   return promise.then((result) => {
-    runningSniffAbort = null;
+    if (runningId === item.id) runningId = null;
+    if (runningSniffAbort === abort) runningSniffAbort = null;
     if (cancelledIds.has(item.id)) {
       cancelledIds.delete(item.id);
       return { ok: false, cancelled: true };

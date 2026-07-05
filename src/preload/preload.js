@@ -25,6 +25,9 @@ contextBridge.exposeInMainWorld('api', {
     onRemoved: (cb) => subscribe('queue:removed', cb),
     onProgress: (cb) => subscribe('queue:progress', cb),
   },
+  browsers: {
+    listCookieSources: () => ipcRenderer.invoke('browsers:list-cookie-sources'),
+  },
   binaries: {
     checkYtDlp: (path, opts) => ipcRenderer.invoke('binaries:check-ytdlp', path, opts),
     checkFfmpeg: (path) => ipcRenderer.invoke('binaries:check-ffmpeg', path),
