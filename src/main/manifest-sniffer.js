@@ -1,5 +1,6 @@
 const { session, BrowserWindow } = require('electron');
 const { looksLikeRawManifest } = require('../shared/manifest-heuristic');
+const { isHttpUrl } = require('./security-utils');
 
 const MANIFEST_CONTENT_TYPES = ['mpegurl', 'dash+xml'];
 
@@ -15,10 +16,17 @@ function isManifestResponse(url, responseHeaders) {
  * network response that looks like an HLS/DASH manifest, mirroring what a user
  * would do by hand via devtools' Network tab.
  * Returns { promise, abort }: promise resolves with either
- *   { ok: true, manifestUrl, referer, userAgent, cookie }
+ *   { ok: true, manifestUrl, referer, userAgent }
  * or { ok: false, error }.
  */
 function sniffManifest(pageUrl, timeoutMs = 20000) {
+  if (!isHttpUrl(pageUrl)) {
+    return {
+      promise: Promise.resolve({ ok: false, error: 'Автопоиск манифеста поддерживает только http/https ссылки.' }),
+      abort: () => {},
+    };
+  }
+
   let settled = false;
   let resolvePromise;
   const promise = new Promise((resolve) => {
@@ -27,7 +35,17 @@ function sniffManifest(pageUrl, timeoutMs = 20000) {
 
   const partitionName = `sniff-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const ses = session.fromPartition(partitionName, { cache: false });
-  const win = new BrowserWindow({ show: false, webPreferences: { session: ses } });
+  ses.setPermissionRequestHandler((webContents, permission, callback) => callback(false));
+  const win = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      session: ses,
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+    },
+  });
 
   const pendingHeaders = new Map();
 
@@ -56,10 +74,17 @@ function sniffManifest(pageUrl, timeoutMs = 20000) {
         manifestUrl: details.url,
         referer: reqHeaders.Referer || reqHeaders.referer || pageUrl,
         userAgent: reqHeaders['User-Agent'] || reqHeaders['user-agent'] || '',
-        cookie: reqHeaders.Cookie || reqHeaders.cookie || '',
       });
     }
     callback({});
+  });
+
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!isHttpUrl(url)) {
+      event.preventDefault();
+    }
   });
 
   win.webContents.on('did-fail-load', (event, code, desc) => {

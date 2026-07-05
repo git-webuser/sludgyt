@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
@@ -6,6 +7,7 @@ const { readSettings } = require('./settings-store');
 const { binaryExists, killProcessTree, isBareCommand } = require('./process-utils');
 const { looksLikeRawManifest } = require('../shared/manifest-heuristic');
 const { sniffManifest } = require('./manifest-sniffer');
+const { isHttpUrl } = require('./security-utils');
 
 const PROGRESS_RE = /\[download\]\s+([\d.]+)%/;
 const FINAL_PATH_RE = /^FINALPATH::(.+)$/;
@@ -19,6 +21,32 @@ const FORMAT_SELECTORS = {
   720: 'bestvideo[height<=720]+bestaudio/best[height<=720]',
   480: 'bestvideo[height<=480]+bestaudio/best[height<=480]',
 };
+const ALLOWED_QUALITIES = new Set(['best', ...Object.keys(FORMAT_SELECTORS)]);
+const WINDOWS_RESERVED_NAMES = new Set([
+  'con',
+  'prn',
+  'aux',
+  'nul',
+  'com1',
+  'com2',
+  'com3',
+  'com4',
+  'com5',
+  'com6',
+  'com7',
+  'com8',
+  'com9',
+  'lpt1',
+  'lpt2',
+  'lpt3',
+  'lpt4',
+  'lpt5',
+  'lpt6',
+  'lpt7',
+  'lpt8',
+  'lpt9',
+]);
+const MAX_FILENAME_LENGTH = 160;
 
 /** @type {import('../shared/types').QueueItem[]} */
 const items = [];
@@ -58,9 +86,49 @@ function generateFilename(url) {
   return `${host}-${stamp}`;
 }
 
-function addItem({ url, filename, saveDir, quality }) {
+function normalizeUrl(value) {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  if (!isHttpUrl(trimmed)) return null;
+  return new URL(trimmed).toString();
+}
+
+function sanitizeFilename(value, fallback) {
+  let cleaned = typeof value === 'string' ? value : '';
+  cleaned = cleaned
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[. ]+$/g, '');
+
+  if (!cleaned) cleaned = fallback;
+  if (cleaned.length > MAX_FILENAME_LENGTH) cleaned = cleaned.slice(0, MAX_FILENAME_LENGTH).trim();
+  if (!cleaned) cleaned = 'video';
+
+  const parsed = path.parse(cleaned);
+  if (WINDOWS_RESERVED_NAMES.has(parsed.name.toLowerCase())) {
+    cleaned = `${parsed.name}-file${parsed.ext}`;
+  }
+
+  return cleaned;
+}
+
+function normalizeSaveDir(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const resolved = path.resolve(value.trim());
+  try {
+    return fs.statSync(resolved).isDirectory() ? resolved : null;
+  } catch {
+    return null;
+  }
+}
+
+function addItem(input = {}) {
+  const { filename, quality } = input;
+  const url = normalizeUrl(input.url);
+  const saveDir = normalizeSaveDir(input.saveDir);
+
   if (!url || !saveDir) {
-    return { ok: false, error: 'Ссылка и папка обязательны.' };
+    return { ok: false, error: 'Укажите корректную http/https ссылку и существующую папку сохранения.' };
   }
 
   const settings = readSettings();
@@ -71,14 +139,15 @@ function addItem({ url, filename, saveDir, quality }) {
     return { ok: false, error: `ffmpeg не найден по пути "${settings.ffmpegPath}". Проверьте настройки.` };
   }
 
-  const resolvedFilename = (filename && filename.trim()) || generateFilename(url);
+  const resolvedQuality = ALLOWED_QUALITIES.has(String(quality)) ? String(quality) : 'best';
+  const resolvedFilename = sanitizeFilename(filename, generateFilename(url));
 
   const item = {
     id: crypto.randomUUID(),
     url,
     filename: resolvedFilename,
     saveDir,
-    quality: quality || 'best',
+    quality: resolvedQuality,
     status: 'queued',
     percent: 0,
     error: undefined,
@@ -139,7 +208,6 @@ function spawnYtDlp(item, url, opts = {}) {
 
     if (opts.referer) args.push('--referer', opts.referer);
     if (opts.userAgent) args.push('--user-agent', opts.userAgent);
-    if (opts.cookie) args.push('--add-header', `Cookie:${opts.cookie}`);
     if (settings.cookiesFromBrowser) {
       args.push('--cookies-from-browser', settings.cookiesFromBrowser);
     }
@@ -328,7 +396,6 @@ async function runItem(item) {
   const secondAttempt = await spawnYtDlp(item, sniffResult.manifestUrl, {
     referer: sniffResult.referer,
     userAgent: sniffResult.userAgent,
-    cookie: sniffResult.cookie,
   });
 
   if (secondAttempt.cancelled) {
@@ -405,6 +472,7 @@ function removeItem(id) {
 }
 
 function reorderItems(orderedIds) {
+  if (!Array.isArray(orderedIds)) return { ok: false, items };
   const byId = new Map(items.map((i) => [i.id, i]));
   const reordered = orderedIds.map((id) => byId.get(id)).filter(Boolean);
   const placed = new Set(reordered.map((i) => i.id));
@@ -418,4 +486,14 @@ function getAll() {
   return items;
 }
 
-module.exports = { addItem, cancelItem, removeItem, reorderItems, getAll };
+function isKnownFinalPath(filePath) {
+  if (typeof filePath !== 'string' || !filePath) return false;
+  const resolved = path.resolve(filePath);
+  return items.some((item) => (
+    item.status === 'done'
+    && item.finalPath
+    && path.resolve(item.finalPath) === resolved
+  ));
+}
+
+module.exports = { addItem, cancelItem, removeItem, reorderItems, getAll, isKnownFinalPath };

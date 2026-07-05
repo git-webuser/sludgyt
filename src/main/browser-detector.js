@@ -139,12 +139,4 @@ function systemDefaultBrowser() {
   return '';
 }
 
-function defaultCookieBrowser() {
-  const browsers = listCookieBrowsers();
-  const systemBrowser = browsers.find((candidate) => candidate.isDefault);
-  if (systemBrowser && !systemBrowser.supported) return '';
-  const browser = systemBrowser || browsers.find((candidate) => candidate.supported);
-  return browser ? browser.id : '';
-}
-
-module.exports = { listCookieBrowsers, defaultCookieBrowser };
+module.exports = { listCookieBrowsers };

@@ -1,6 +1,7 @@
 const { app, BrowserWindow, shell, Menu } = require('electron');
 const path = require('path');
 const { registerIpcHandlers } = require('./ipc-handlers');
+const { isAllowedExternalUrl } = require('./security-utils');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -21,7 +22,9 @@ function createWindow() {
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
 
   win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    if (isAllowedExternalUrl(url)) {
+      shell.openExternal(url);
+    }
     return { action: 'deny' };
   });
 
