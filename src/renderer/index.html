@@ -9,21 +9,52 @@
 <body>
   <div class="app">
     <header class="app-header">
-      <h1>sludgyt</h1>
-      <button id="settings-toggle" class="btn btn-ghost">настройки</button>
+      <div class="app-brand">
+        <img src="app-icon.png" alt="" class="app-icon" />
+        <h1>sludgyt</h1>
+      </div>
+      <button id="settings-toggle" class="btn btn-ghost">Настройки</button>
     </header>
+
+    <div id="startup-banner" class="banner error hidden"></div>
 
     <section class="panel add-form">
       <div class="field">
         <label for="url-input">Ссылка</label>
-        <input id="url-input" type="text" placeholder="https://... или прямая ссылка на .m3u8/.mpd" autocomplete="off" />
+        <div class="input-row">
+          <input id="url-input" type="text" placeholder="https://... или прямая ссылка на .m3u8/.mpd" autocomplete="off" />
+          <button id="url-paste" class="btn btn-ghost icon-btn" title="Вставить из буфера">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 5H2V22H19V14" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M12.5 7.5L8.5 11.5L12.5 15.5L16.5 11.5M14 6L18 2L22 6L18 10M13 11L17.5 6.5" stroke="currentColor" stroke-width="1.75"/>
+            </svg>
+          </button>
+          <button id="url-clear" class="btn btn-ghost icon-btn" title="Очистить">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4.5 4.5L19.5 19.5M19.5 4.5L4.5 19.5" stroke="currentColor" stroke-width="1.75"/>
+            </svg>
+          </button>
+        </div>
         <div id="manifest-warning" class="banner warn hidden">
           Прямая ссылка на манифест
         </div>
       </div>
       <div class="field">
         <label for="filename-input">Имя файла</label>
-        <input id="filename-input" type="text" placeholder="my-video" autocomplete="off" />
+        <div class="input-row">
+          <input id="filename-input" type="text" placeholder="my-video" autocomplete="off" />
+          <button id="filename-paste" class="btn btn-ghost icon-btn" title="Вставить из буфера">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 5H2V22H19V14" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M12.5 7.5L8.5 11.5L12.5 15.5L16.5 11.5M14 6L18 2L22 6L18 10M13 11L17.5 6.5" stroke="currentColor" stroke-width="1.75"/>
+            </svg>
+          </button>
+          <button id="filename-clear" class="btn btn-ghost icon-btn" title="Очистить">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4.5 4.5L19.5 19.5M19.5 4.5L4.5 19.5" stroke="currentColor" stroke-width="1.75"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="field">
         <label>Папка сохранения</label>
@@ -33,7 +64,10 @@
         </div>
       </div>
       <div id="add-error" class="banner error hidden"></div>
-      <button id="add-btn" class="btn btn-primary">Добавить в очередь</button>
+      <div class="add-form-actions">
+        <button id="add-btn" class="btn btn-primary">Добавить в очередь</button>
+        <button id="clear-queue-btn" class="btn btn-ghost">Очистить очередь</button>
+      </div>
     </section>
 
     <section class="panel queue-panel">
@@ -52,6 +86,7 @@
       <div class="dir-row">
         <input id="ytdlp-path" type="text" placeholder="yt-dlp" />
         <button id="ytdlp-browse" class="btn">Обзор…</button>
+        <button id="ytdlp-autodetect" class="btn btn-ghost">Найти</button>
       </div>
       <div class="check-row">
         <button id="ytdlp-check" class="btn">Проверить версию</button>
@@ -64,6 +99,7 @@
       <div class="dir-row">
         <input id="ffmpeg-path" type="text" placeholder="ffmpeg" />
         <button id="ffmpeg-browse" class="btn">Обзор…</button>
+        <button id="ffmpeg-autodetect" class="btn btn-ghost">Найти</button>
       </div>
       <div class="check-row">
         <button id="ffmpeg-check" class="btn">Проверить версию</button>

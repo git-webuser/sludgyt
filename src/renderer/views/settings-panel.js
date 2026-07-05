@@ -12,6 +12,9 @@ function initSettingsPanel() {
   const ffmpegBrowse = document.getElementById('ffmpeg-browse');
   const defaultDirBrowse = document.getElementById('default-dir-browse');
 
+  const ytdlpAutoBtn = document.getElementById('ytdlp-autodetect');
+  const ffmpegAutoBtn = document.getElementById('ffmpeg-autodetect');
+
   const ytdlpCheckBtn = document.getElementById('ytdlp-check');
   const ytdlpCheckResult = document.getElementById('ytdlp-check-result');
   const ytdlpGithubBtn = document.getElementById('ytdlp-github');
@@ -107,6 +110,34 @@ function initSettingsPanel() {
     if (picked) defaultDir.value = picked;
   });
 
+  ytdlpAutoBtn.addEventListener('click', async () => {
+    ytdlpCheckResult.textContent = 'Ищу…';
+    ytdlpCheckResult.className = 'check-result';
+    const result = await window.api.binaries.autoDetect('yt-dlp');
+    if (result.found) {
+      ytdlpPath.value = result.path;
+      ytdlpCheckResult.textContent = `Найдено: ${result.path}`;
+      ytdlpCheckResult.className = 'check-result success';
+    } else {
+      ytdlpCheckResult.textContent = 'Не удалось найти автоматически. Укажите путь вручную через «Обзор…».';
+      ytdlpCheckResult.className = 'check-result error';
+    }
+  });
+
+  ffmpegAutoBtn.addEventListener('click', async () => {
+    ffmpegCheckResult.textContent = 'Ищу…';
+    ffmpegCheckResult.className = 'check-result';
+    const result = await window.api.binaries.autoDetect('ffmpeg');
+    if (result.found) {
+      ffmpegPath.value = result.path;
+      ffmpegCheckResult.textContent = `Найдено: ${result.path}`;
+      ffmpegCheckResult.className = 'check-result success';
+    } else {
+      ffmpegCheckResult.textContent = 'Не удалось найти автоматически. Укажите путь вручную через «Обзор…».';
+      ffmpegCheckResult.className = 'check-result error';
+    }
+  });
+
   ytdlpCheckBtn.addEventListener('click', async () => {
     ytdlpCheckResult.textContent = 'Проверка…';
     ytdlpCheckResult.className = 'check-result';
@@ -158,4 +189,6 @@ function initSettingsPanel() {
     await window.api.settings.set(partial);
     dialog.close();
   });
+
+  return { open: openDialog };
 }

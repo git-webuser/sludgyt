@@ -10,6 +10,9 @@ const { sniffManifest } = require('./manifest-sniffer');
 const PROGRESS_RE = /\[download\]\s+([\d.]+)%/;
 const FINAL_PATH_RE = /^FINALPATH::(.+)$/;
 const STDERR_TAIL_LINES = 20;
+const INACTIVITY_LIMIT_MS = 3 * 60 * 1000;
+const INACTIVITY_CHECK_INTERVAL_MS = 15000;
+const CANCEL_GRACE_MS = 5000;
 
 /** @type {import('../shared/types').QueueItem[]} */
 const items = [];
@@ -25,6 +28,10 @@ function broadcast(channel, payload) {
 }
 
 function broadcastUpdate(item) {
+  // If the item was already removed from the queue, don't let a late/straggling
+  // event (e.g. a child process that finally exits after being force-released)
+  // resurrect it in the renderer's list.
+  if (!items.includes(item)) return;
   broadcast('queue:update', item);
 }
 
@@ -32,9 +39,22 @@ function findItem(id) {
   return items.find((i) => i.id === id);
 }
 
+function generateFilename(url) {
+  let host = 'video';
+  try {
+    host = new URL(url).hostname.replace(/^www\./, '') || 'video';
+  } catch {
+    // Not a parseable absolute URL — fall back to the generic label above.
+  }
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  return `${host}-${stamp}`;
+}
+
 function addItem({ url, filename, saveDir }) {
-  if (!url || !filename || !saveDir) {
-    return { ok: false, error: 'Ссылка, имя файла и папка обязательны.' };
+  if (!url || !saveDir) {
+    return { ok: false, error: 'Ссылка и папка обязательны.' };
   }
 
   const settings = readSettings();
@@ -45,10 +65,12 @@ function addItem({ url, filename, saveDir }) {
     return { ok: false, error: `ffmpeg не найден по пути "${settings.ffmpegPath}". Проверьте настройки.` };
   }
 
+  const resolvedFilename = (filename && filename.trim()) || generateFilename(url);
+
   const item = {
     id: crypto.randomUUID(),
     url,
-    filename,
+    filename: resolvedFilename,
     saveDir,
     status: 'queued',
     percent: 0,
@@ -68,6 +90,17 @@ function maybeStartNext() {
   const next = items.find((i) => i.status === 'queued');
   if (!next) return;
   runItem(next);
+}
+
+/** Immediately frees the currently-running slot and advances the queue, regardless
+ * of whether the underlying OS process has actually confirmed it exited yet — used
+ * as a safety net so a hung/zombie process can never permanently block the queue. */
+function forceReleaseRunningSlot(id) {
+  if (runningId !== id) return;
+  runningId = null;
+  runningChild = null;
+  runningSniffAbort = null;
+  maybeStartNext();
 }
 
 /**
@@ -105,6 +138,11 @@ function spawnYtDlp(item, url, opts = {}) {
       child = spawn(settings.ytDlpPath, args, {
         windowsHide: true,
         detached: process.platform !== 'win32',
+        // yt-dlp is a Python program; when stdout isn't a real terminal, Python
+        // block-buffers it instead of flushing per line, so progress updates can
+        // arrive in one giant burst right at the end (looks like "stuck at 0%,
+        // then jumps to 100%"). This forces line-by-line flushing.
+        env: { ...process.env, PYTHONUNBUFFERED: '1' },
       });
     } catch (err) {
       resolve({ ok: false, error: `Не удалось запустить yt-dlp: ${err.message}` });
@@ -119,8 +157,24 @@ function spawnYtDlp(item, url, opts = {}) {
 
     let stderrTail = [];
     let stdoutBuf = '';
+    let settled = false;
+    let lastActivityAt = Date.now();
+
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastActivityAt > INACTIVITY_LIMIT_MS) {
+        clearInterval(watchdog);
+        cancelledIds.delete(item.id);
+        killProcessTree(child.pid);
+        forceReleaseRunningSlot(item.id);
+        if (!settled) {
+          settled = true;
+          resolve({ ok: false, error: 'Загрузка зависла: нет данных от yt-dlp более 3 минут. Прервано автоматически.' });
+        }
+      }
+    }, INACTIVITY_CHECK_INTERVAL_MS);
 
     child.stdout.on('data', (chunk) => {
+      lastActivityAt = Date.now();
       stdoutBuf += chunk.toString();
       const lines = stdoutBuf.split('\n');
       stdoutBuf = lines.pop();
@@ -139,6 +193,7 @@ function spawnYtDlp(item, url, opts = {}) {
     });
 
     child.stderr.on('data', (chunk) => {
+      lastActivityAt = Date.now();
       const lines = chunk.toString().split('\n').filter(Boolean);
       stderrTail.push(...lines);
       if (stderrTail.length > STDERR_TAIL_LINES) {
@@ -147,16 +202,23 @@ function spawnYtDlp(item, url, opts = {}) {
     });
 
     child.on('error', (err) => {
+      clearInterval(watchdog);
       runningId = null;
       runningChild = null;
+      if (settled) return;
+      settled = true;
       resolve({ ok: false, error: `Не удалось запустить yt-dlp: ${err.message}` });
     });
 
     child.on('exit', (code) => {
+      clearInterval(watchdog);
       const wasCancelled = cancelledIds.has(item.id);
       cancelledIds.delete(item.id);
       runningId = null;
       runningChild = null;
+
+      if (settled) return;
+      settled = true;
 
       if (wasCancelled) {
         resolve({ ok: false, cancelled: true });
@@ -282,6 +344,19 @@ function cancelItem(id) {
     cancelledIds.add(id);
     if (runningChild) killProcessTree(runningChild.pid);
     if (runningSniffAbort) runningSniffAbort();
+
+    // Safety net: don't trust the OS process to actually die and emit 'exit' — if it
+    // hasn't within a short grace period (hung/zombie process), free the slot anyway
+    // so the queue can never get permanently stuck on a single bad item.
+    setTimeout(() => {
+      if (runningId !== id) return;
+      cancelledIds.delete(id);
+      item.status = 'cancelled';
+      item.error = 'Процесс не ответил на отмену вовремя — принудительно освобождено.';
+      broadcastUpdate(item);
+      forceReleaseRunningSlot(id);
+    }, CANCEL_GRACE_MS);
+
     return { ok: true };
   }
 
@@ -291,14 +366,42 @@ function cancelItem(id) {
 function removeItem(id) {
   const idx = items.findIndex((i) => i.id === id);
   if (idx === -1) return { ok: false };
-  if (items[idx].status === 'downloading' || items[idx].status === 'sniffing') return { ok: false };
+
+  const item = items[idx];
+  const wasActive = item.status === 'downloading' || item.status === 'sniffing';
+
+  if (wasActive) {
+    cancelledIds.add(id);
+    if (runningId === id) {
+      if (runningChild) killProcessTree(runningChild.pid);
+      if (runningSniffAbort) runningSniffAbort();
+    }
+  }
+
   items.splice(idx, 1);
   broadcast('queue:removed', { id });
+
+  // Don't wait for the process to confirm it exited — free the slot immediately so
+  // deleting a stuck item always unblocks the rest of the queue right away.
+  if (wasActive && runningId === id) {
+    forceReleaseRunningSlot(id);
+  }
+
   return { ok: true };
+}
+
+function reorderItems(orderedIds) {
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const reordered = orderedIds.map((id) => byId.get(id)).filter(Boolean);
+  const placed = new Set(reordered.map((i) => i.id));
+  const missing = items.filter((i) => !placed.has(i.id));
+  items.length = 0;
+  items.push(...reordered, ...missing);
+  return { ok: true, items };
 }
 
 function getAll() {
   return items;
 }
 
-module.exports = { addItem, cancelItem, removeItem, getAll };
+module.exports = { addItem, cancelItem, removeItem, reorderItems, getAll };

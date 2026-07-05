@@ -20,17 +20,22 @@ contextBridge.exposeInMainWorld('api', {
     remove: (id) => ipcRenderer.invoke('queue:remove', { id }),
     cancel: (id) => ipcRenderer.invoke('queue:cancel', { id }),
     getAll: () => ipcRenderer.invoke('queue:get-all'),
+    reorder: (orderedIds) => ipcRenderer.invoke('queue:reorder', orderedIds),
     onUpdate: (cb) => subscribe('queue:update', cb),
     onRemoved: (cb) => subscribe('queue:removed', cb),
     onProgress: (cb) => subscribe('queue:progress', cb),
   },
   binaries: {
-    checkYtDlp: (path) => ipcRenderer.invoke('binaries:check-ytdlp', path),
+    checkYtDlp: (path, opts) => ipcRenderer.invoke('binaries:check-ytdlp', path, opts),
     checkFfmpeg: (path) => ipcRenderer.invoke('binaries:check-ffmpeg', path),
+    autoDetect: (which) => ipcRenderer.invoke('binaries:auto-detect', which),
   },
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
     openPath: (filePath) => ipcRenderer.invoke('shell:open-path', filePath),
     showInFolder: (filePath) => ipcRenderer.invoke('shell:show-in-folder', filePath),
+  },
+  clipboard: {
+    readText: () => ipcRenderer.invoke('clipboard:read-text'),
   },
 });

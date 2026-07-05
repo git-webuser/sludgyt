@@ -20,6 +20,11 @@ function initAddForm() {
   const warningBanner = document.getElementById('manifest-warning');
   const errorBanner = document.getElementById('add-error');
 
+  const urlPasteBtn = document.getElementById('url-paste');
+  const urlClearBtn = document.getElementById('url-clear');
+  const filenamePasteBtn = document.getElementById('filename-paste');
+  const filenameClearBtn = document.getElementById('filename-clear');
+
   let selectedDir = '';
 
   window.api.settings.get().then((settings) => {
@@ -31,6 +36,30 @@ function initAddForm() {
 
   urlInput.addEventListener('input', () => {
     warningBanner.classList.toggle('hidden', !looksLikeRawManifestClient(urlInput.value.trim()));
+  });
+
+  urlPasteBtn.addEventListener('click', async () => {
+    const text = await window.api.clipboard.readText();
+    urlInput.value = text;
+    urlInput.dispatchEvent(new Event('input'));
+    urlInput.focus();
+  });
+
+  urlClearBtn.addEventListener('click', () => {
+    urlInput.value = '';
+    urlInput.dispatchEvent(new Event('input'));
+    urlInput.focus();
+  });
+
+  filenamePasteBtn.addEventListener('click', async () => {
+    const text = await window.api.clipboard.readText();
+    filenameInput.value = text;
+    filenameInput.focus();
+  });
+
+  filenameClearBtn.addEventListener('click', () => {
+    filenameInput.value = '';
+    filenameInput.focus();
   });
 
   dirBrowseBtn.addEventListener('click', async () => {
@@ -46,8 +75,8 @@ function initAddForm() {
     const url = urlInput.value.trim();
     const filename = filenameInput.value.trim();
 
-    if (!url || !filename || !selectedDir) {
-      errorBanner.textContent = 'Заполните ссылку, имя файла и папку сохранения.';
+    if (!url || !selectedDir) {
+      errorBanner.textContent = 'Заполните ссылку и папку сохранения.';
       errorBanner.classList.remove('hidden');
       return;
     }

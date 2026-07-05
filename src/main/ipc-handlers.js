@@ -1,8 +1,8 @@
 const fs = require('fs');
-const { ipcMain, dialog, shell, BrowserWindow } = require('electron');
+const { ipcMain, dialog, shell, clipboard, BrowserWindow } = require('electron');
 const settingsStore = require('./settings-store');
 const queueManager = require('./queue-manager');
-const { checkYtDlp, checkFfmpeg } = require('./version-check');
+const { checkYtDlp, checkFfmpeg, autoDetectBinary } = require('./version-check');
 
 const ALLOWED_EXTERNAL_PREFIXES = ['https://github.com/yt-dlp/yt-dlp', 'https://ffmpeg.org'];
 
@@ -34,9 +34,18 @@ function registerIpcHandlers() {
   ipcMain.handle('queue:remove', (event, { id }) => queueManager.removeItem(id));
   ipcMain.handle('queue:cancel', (event, { id }) => queueManager.cancelItem(id));
   ipcMain.handle('queue:get-all', () => queueManager.getAll());
+  ipcMain.handle('queue:reorder', (event, orderedIds) => queueManager.reorderItems(orderedIds));
 
-  ipcMain.handle('binaries:check-ytdlp', (event, path) => checkYtDlp(path));
+  ipcMain.handle('binaries:check-ytdlp', (event, path, opts) => checkYtDlp(path, opts));
   ipcMain.handle('binaries:check-ffmpeg', (event, path) => checkFfmpeg(path));
+
+  // `which` is a fixed enum, never the raw renderer string — it maps to a hardcoded
+  // literal command name below before it ever reaches the PowerShell invocation in
+  // autoDetectBinary, so a compromised renderer can't inject into that command.
+  ipcMain.handle('binaries:auto-detect', (event, which) => {
+    const name = which === 'ffmpeg' ? 'ffmpeg' : 'yt-dlp';
+    return autoDetectBinary(name);
+  });
 
   ipcMain.handle('shell:open-external', (event, url) => {
     if (!ALLOWED_EXTERNAL_PREFIXES.some((prefix) => url.startsWith(prefix))) {
@@ -61,6 +70,8 @@ function registerIpcHandlers() {
     shell.showItemInFolder(filePath);
     return { ok: true };
   });
+
+  ipcMain.handle('clipboard:read-text', () => clipboard.readText());
 }
 
 module.exports = { registerIpcHandlers };

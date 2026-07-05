@@ -1,7 +1,30 @@
 let onRetryCallback = null;
+let onReorderCallback = null;
+let draggedId = null;
 
 function setQueueRetryHandler(cb) {
   onRetryCallback = cb;
+}
+
+function setQueueReorderHandler(cb) {
+  onReorderCallback = cb;
+}
+
+async function handleReorderDrop(targetId) {
+  const sourceId = draggedId;
+  if (!sourceId || sourceId === targetId) return;
+
+  const ids = Array.from(document.querySelectorAll('.queue-item')).map((r) => r.dataset.id);
+  const fromIdx = ids.indexOf(sourceId);
+  if (fromIdx === -1) return;
+  ids.splice(fromIdx, 1);
+  const toIdx = ids.indexOf(targetId);
+  ids.splice(toIdx === -1 ? ids.length : toIdx, 0, sourceId);
+
+  const result = await window.api.queue.reorder(ids);
+  if (result.ok && onReorderCallback) {
+    onReorderCallback(result.items);
+  }
 }
 
 function statusLabel(status) {
@@ -86,6 +109,31 @@ function buildQueueRow(item) {
   const row = document.createElement('div');
   row.className = 'queue-item';
   row.dataset.id = item.id;
+
+  const isActive = item.status === 'downloading' || item.status === 'sniffing';
+  row.draggable = !isActive;
+
+  row.addEventListener('dragstart', () => {
+    draggedId = item.id;
+    row.classList.add('dragging');
+  });
+  row.addEventListener('dragend', () => {
+    row.classList.remove('dragging');
+    draggedId = null;
+  });
+  row.addEventListener('dragover', (event) => {
+    if (!draggedId || draggedId === item.id) return;
+    event.preventDefault();
+    row.classList.add('drag-over');
+  });
+  row.addEventListener('dragleave', () => {
+    row.classList.remove('drag-over');
+  });
+  row.addEventListener('drop', (event) => {
+    event.preventDefault();
+    row.classList.remove('drag-over');
+    handleReorderDrop(item.id);
+  });
 
   const openable = item.status === 'done' && item.finalPath;
   if (openable) {
