@@ -4,7 +4,17 @@ directories:
   output: release
 files:
   - src/**/*
+  - build/icon.png
   - package.json
+mac:
+  icon: build/icon.png
+  identity: null
+  category: public.app-category.utilities
+  target:
+    - target: dmg
+      arch: [universal]
+    - target: zip
+      arch: [universal]
 win:
   icon: build/icon.ico
   target:
